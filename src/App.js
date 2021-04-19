@@ -1,9 +1,13 @@
 import logo from './logo.svg';
 import './App.css';
+import FaunaTest from './fauna/FaunaTest.bs'
+import React from 'react'
 
 function App() {
+
   return (
     <div className="App">
+      <FaunaTest />
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>
