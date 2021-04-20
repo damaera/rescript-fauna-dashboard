@@ -548,7 +548,7 @@ let rec make = t => {
   | Year(q1) => s1("year", q1)
 
   // primitives
-  | String(str) => str
+  | String(str) => `"${str}"`
   | Int(int) => Js.Int.toString(int)
   | Float(float) => Js.Float.toString(float)
   | Array(arr) => `[${arr->Js.Array2.map(item => make(item))->Js.Array2.joinWith(",")}]`
@@ -572,7 +572,3 @@ let rec make = t => {
     }
   }
 }
-
-// let rec fromFQL = fql => {
-
-// }
