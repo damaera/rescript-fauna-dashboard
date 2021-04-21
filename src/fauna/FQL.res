@@ -5,12 +5,21 @@ open Js.String2
 exception SyntaxError(string)
 
 let isFunction = (str, function) => str->startsWith(`${function}(`) && str->endsWith(")")
-let getContent = (str, function) => str->slice(~from=`${function}(`->length, ~to_=-1)
+let getContent = (str, function) => {
+  str
+  ->slice(~from=`${function}(`->length, ~to_=-1)
+  ->replaceByRe(%re("/^\s+/g"), "")
+  ->replaceByRe(%re("/\s+$/g"), "")
+}
 let isString = str => {
   (str->startsWith(`"`) && str->endsWith(`"`)) ||
   str->startsWith(`'`) && str->endsWith(`'`) ||
   (str->startsWith("`") && str->endsWith("`"))
 }
+let matchSplitByComma = str =>
+  str->Js.String2.match_(
+    %re("/\s*(\"[^\"]*\"|\`[^\`]*\`|\'[^\']*\'|\([^)]*\)|\[[^\]]*\]|\{[^\}]*\}|[^,]+)/gm"),
+  )
 
 // FQL make
 let rec make = str => {
@@ -42,10 +51,9 @@ let rec make = str => {
   | str if str |> Js.Re.test_(%re("/^[-]?\d+(\.\d+)?$/")) => Float(str->Js.Float.fromString)
   | str if str->startsWith(`[`) && str->endsWith(`]`) => {
       let content = str->slice(~from=1, ~to_=-1)
-      let result =
-        content->Js.String2.match_(
-          %re("/\s*(\"[^\"]*\"|\`[^\`]*\`|\'[^\']*\'|\([^)]*\)|\[[^\]]*\]|\{[^\}]*\}|[^,]+)/gm"),
-        )
+      let result = content->matchSplitByComma
+
+      // Append()
 
       switch result {
       | Some(result) =>
@@ -59,10 +67,9 @@ let rec make = str => {
     }
   | str if str->startsWith(`{`) && str->endsWith(`}`) => {
       let content = str->slice(~from=1, ~to_=-1)
-      let result =
-        content->Js.String2.match_(
-          %re("/\s*(\"[^\"]*\"|\`[^\`]*\`|\'[^\']*\'|\([^)]*\)|\[[^\]]*\]|\{[^\}]*\}|[^,]+)/gm"),
-        )
+      let result = content->matchSplitByComma
+
+      // Append()
       switch result {
       | Some(result) => {
           let newResult = result->Js.Array2.map(item => {
@@ -99,6 +106,72 @@ let rec make = str => {
       AccessProvider(content->make)
     }
   | str if str->isFunction("AccessProviders") => AccessProviders()
+
+  | str if str->isFunction("Acos") => {
+      let content = str->getContent("Acos")
+      Acos(content->make)
+    }
+  | str if str->isFunction("Add") => {
+      let content = str->getContent("Add")
+      Add(content->make)
+    }
+  | str if str->isFunction("All") => {
+      let content = str->getContent("All")
+      All(content->make)
+    }
+  | str if str->isFunction("And") => {
+      let content = str->getContent("And")
+      And(content->make)
+    }
+  | str if str->isFunction("Any") => {
+      let content = str->getContent("Any")
+      Any(content->make)
+    }
+  | str if str->isFunction("Append") => {
+      let content = str->getContent("Append")
+      switch content->matchSplitByComma {
+      | Some([q1, q2]) => Append(q1->make, q2->make)
+      | _ => raise(SyntaxError("must 2 item :" ++ str))
+      }
+    }
+  | str if str->isFunction("Asin") => {
+      let content = str->getContent("Asin")
+      Asin(content->make)
+    }
+  | str if str->isFunction("At") => {
+      let content = str->getContent("At")
+      switch content->matchSplitByComma {
+      | Some([q1, q2]) => At(q1->make, q2->make)
+      | _ => raise(SyntaxError("must 2 item :" ++ str))
+      }
+    }
+  | str if str->isFunction("Atan") => {
+      let content = str->getContent("Atan")
+      Atan(content->make)
+    }
+  | str if str->isFunction("BitAnd") => {
+      let content = str->getContent("BitAnd")
+      BitAnd(content->make)
+    }
+  | str if str->isFunction("BitNot") => {
+      let content = str->getContent("BitNot")
+      BitNot(content->make)
+    }
+  | str if str->isFunction("BitOr") => {
+      let content = str->getContent("BitOr")
+      BitOr(content->make)
+    }
+  | str if str->isFunction("BitXor") => {
+      let content = str->getContent("BitXor")
+      BitXor(content->make)
+    }
+  | str if str->isFunction("Call") => {
+      let content = str->getContent("At")
+      switch content->matchSplitByComma {
+      | Some([q1, q2]) => At(q1->make, q2->make)
+      | _ => raise(SyntaxError("must 2 item :" ++ str))
+      }
+    }
   | str if str->isFunction("Collections") => {
       let content = str->getContent("Collections")
       switch content {
@@ -106,8 +179,10 @@ let rec make = str => {
       | content => Collections(Some(content->make))
       }
     }
+  // Append()
 
   // other
-  | str => raise(SyntaxError("other " ++ str))
+  // | str => raise(SyntaxError("other " ++ str))
+  | str => Null
   }
 }

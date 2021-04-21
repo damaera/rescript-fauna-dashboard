@@ -28,19 +28,29 @@ let make = () => {
 
   Js.log(allCollections)
 
-  switch allCollections {
-  | Idle
-  | Loading =>
-    <div> {"Loading..."->React.string} </div>
-  | Success(data) =>
-    data
-    ->Js.Array2.map(item => {
-      <div> {item["@ref"]["id"]} </div>
-    })
-    ->React.array
+  let (state, setState) = React.useState(() => "")
+  let (queryData, submitQuery) = Client.useQuery(~query=state->FQL.make, ~fetchOnMount=false, ())
+
+  Js.log(queryData)
+  let responseEl = switch queryData {
+  | Idle => React.null
+  | Loading => "Loading..."->React.string
+  | Success(data) => Js.Json.stringifyWithSpace(data, 2)->React.string
   | Error(err) => {
       Js.log(err)
-      React.null
+      "Error happened"->React.string
     }
   }
+  <div>
+    <textarea
+      value={state}
+      onChange={e => {
+        let target = e->ReactEvent.Form.target
+        let value = target["value"]
+        setState(_ => value)
+      }}
+    />
+    <button onClick={_ => {submitQuery()}}> {"submit query"->React.string} </button>
+    <div> <pre> <code> {responseEl} </code> </pre> </div>
+  </div>
 }

@@ -1,7 +1,33 @@
+@val external localStorage: {..} = "localStorage"
+@set external persistHost: ('a, string) => unit = "faunaHost"
+@set external persistSecret: ('a, string) => unit = "faunaSecret"
+
 @react.component
 let make = () => {
   let appStore = Store.store
   let appState = appStore.useStore()
+
+  React.useEffect0(() => {
+    switch localStorage["faunaHost"] {
+    | Some(host) =>
+      appStore.dispatch(
+        SetHost(
+          switch host {
+          | "faunadb" => FaunaDB
+          | "localhost" => Localhost
+          | str => Other(str)
+          },
+        ),
+      )
+    | _ => ()
+    }
+    switch localStorage["faunaSecret"] {
+    | Some(secret) => appStore.dispatch(SetSecret(secret))
+    | _ => ()
+    }
+
+    None
+  })
 
   let (_, doPingServer) = Client.useQuery(
     ~query=True,
@@ -18,6 +44,15 @@ let make = () => {
         open ReactEvent.Form
         e->preventDefault
         doPingServer()
+        //
+        localStorage->persistHost(
+          switch appState.host {
+          | FaunaDB => "faunadb"
+          | Localhost => "localhost"
+          | Other(str) => str
+          },
+        )
+        localStorage->persistSecret(appState.secret)
       }}>
       <label>
         <div> {"Fauna Host"->React.string} </div>
