@@ -199,7 +199,7 @@ type rec t =
   | Int(int)
   | Float(float)
   | Array(array<t>)
-  | Dict(Js.Dict.t<string>)
+  | Dict(Js.Dict.t<t>)
   | Object(t)
   | True
   | False
@@ -446,7 +446,7 @@ let rec make = t => {
           dict
           ->Js.Dict.entries
           ->Js.Array2.map(((key, val_)) => {
-            `${key}:${val_}`
+            `${key}:${val_->make}`
           })
           ->Js.Array2.joinWith(",")
         `{"paginate":${make(q1)},${opts}}`
@@ -560,15 +560,11 @@ let rec make = t => {
         dict
         ->Js.Dict.entries
         ->Js.Array2.map(((key, val_)) => {
-          `${key}:${val_}`
+          `${key}:${val_->make}`
         })
         ->Js.Array2.joinWith(",")
       `{${opts}}`
     }
-  | Object(obj) =>
-    switch Js.Json.stringifyAny(obj) {
-    | Some(obj) => s1("object", String(obj))
-    | None => ""
-    }
+  | Object(obj) => s1("object", obj)
   }
 }
