@@ -16,10 +16,69 @@ let isString = str => {
   str->startsWith(`'`) && str->endsWith(`'`) ||
   (str->startsWith("`") && str->endsWith("`"))
 }
-let matchSplitByComma = str =>
-  str->Js.String2.match_(
-    %re("/\s*(\"[^\"]*\"|\`[^\`]*\`|\'[^\']*\'|\([^)]*\)|\[[^\]]*\]|\{[^\}]*\}|[^,]+)/gm"),
-  )
+
+/**
+function parse(str) {
+  let result = [], item = '', depth = 0;
+
+  function push() { if (item) result.push(item); item = ''; }
+
+  for (let i = 0, c; c = str[i], i < str.length; i++) {
+    if (!depth && c === ',') push();
+    else {
+      item += c;
+      if (c === '[') depth++;
+      if (c === ']') depth--;
+    }
+  }
+  
+  push();
+  return result;
+}
+        
+console.log(parse("[1, '15', [false]], [[], 'sup']"));
+*/
+let matchSplitByComma = str => {
+  let result = []
+  let item = ref("")
+  let depth = ref(0)
+
+  let push = () => {
+    if item.contents !== "" {
+      Js.Array2.push(result, item.contents)->ignore
+      item := ""
+    }
+  }
+
+  for i in 0 to str->Js.String2.length {
+    let c = str->Js.String2.charAt(i)
+    if depth.contents === 0 && c === "," {
+      push()
+    } else {
+      item := item.contents ++ c
+      switch c {
+      | "("
+      | "["
+      | "{" =>
+        depth := depth.contents + 1
+      | ")"
+      | "]"
+      | "}" =>
+        depth := depth.contents - 1
+      | _ => ()
+      }
+    }
+  }
+  push()
+
+  Js.log(result)
+
+  Some(result)
+
+  // str->Js.String2.match_(
+  //   %re("/\s*(\"[^\"]*\"|\`[^\`]*\`|\'[^\']*\'|\([^)]*\)|\[[^\]]*\]|\{[^\}]*\}|[^,]+)/g"),
+  // )
+}
 
 // FQL make
 let rec make = str => {
@@ -805,6 +864,7 @@ let rec make = str => {
     }
   | str if str->isFunction("Map") => {
       let content = str->getContent("Map")
+      Js.log(content->matchSplitByComma)
       switch content->matchSplitByComma {
       | Some([q1, q2]) => Map(q1->make, q2->make)
       | _ => raise(SyntaxError("must 2 args: " ++ str))
@@ -1224,7 +1284,10 @@ let rec make = str => {
       let content = str->getContent("Year")
       Year(content->make)
     }
-  // other
-  | str => raise(SyntaxError("Syntax not found: " ++ str))
+
+  | str => {
+      Js.Console.error("Syntax not found")
+      raise(SyntaxError("Syntax not found: " ++ str))
+    }
   }
 }

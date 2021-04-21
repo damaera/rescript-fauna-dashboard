@@ -24,21 +24,22 @@ module Queries = {
 }
 @react.component
 let make = () => {
-  let (allCollections, _) = Client.useQuery(~query=Queries.allCollections, ())
+  // let (allCollections, _) = Client.useQuery(~query=Queries.allCollections, ())
 
-  Js.log(allCollections)
+  // Js.log(allCollections)
 
   let (state, setState) = React.useState(() => "")
-  let (queryData, submitQuery) = Client.useQuery(~query=state->FQL.make, ~fetchOnMount=false, ())
+  let (queryData, submitQuery) = Client.useFQL(~fql=state, ~fetchOnMount=false, ())
 
-  Js.log(queryData)
   let responseEl = switch queryData {
   | Idle => React.null
   | Loading => "Loading..."->React.string
   | Success(data) => Js.Json.stringifyWithSpace(data, 2)->React.string
-  | Error(err) => {
-      Js.log(err)
-      "Error happened"->React.string
+  | Error(err) =>
+    switch err {
+    | FaunaError(err) => Js.Json.stringifyWithSpace(err, 2)->React.string
+    | SyntaxError(str) => str->React.string
+    | _ => "Error happened"->React.string
     }
   }
   <div>
