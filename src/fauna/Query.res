@@ -38,7 +38,7 @@ type rec t =
   | CreateIndex(t)
   | CreateKey(t)
   | CreateRole(t)
-  | Credentials(unit)
+  | Credentials(option<t>)
   | CurrentIdentity(unit)
   | CurrentToken(unit)
   | Database(t, option<t>)
