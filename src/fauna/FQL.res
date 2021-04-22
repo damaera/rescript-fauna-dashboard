@@ -11,33 +11,13 @@ let getContent = (str, function) => {
   ->replaceByRe(%re("/^\s+/g"), "")
   ->replaceByRe(%re("/\s+$/g"), "")
 }
+
 let isString = str => {
   (str->startsWith(`"`) && str->endsWith(`"`)) ||
   str->startsWith(`'`) && str->endsWith(`'`) ||
   (str->startsWith("`") && str->endsWith("`"))
 }
 
-/**
-function parse(str) {
-  let result = [], item = '', depth = 0;
-
-  function push() { if (item) result.push(item); item = ''; }
-
-  for (let i = 0, c; c = str[i], i < str.length; i++) {
-    if (!depth && c === ',') push();
-    else {
-      item += c;
-      if (c === '[') depth++;
-      if (c === ']') depth--;
-    }
-  }
-  
-  push();
-  return result;
-}
-        
-console.log(parse("[1, '15', [false]], [[], 'sup']"));
-*/
 let matchSplitByComma = str => {
   let result = []
   let item = ref("")

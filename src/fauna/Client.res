@@ -84,52 +84,55 @@ let useQuery = (~query, ~fetchOnMount=true, ~onSuccess=?, ~onError=?, ()) => {
   (state, execQuery)
 }
 
-let useFQL = (~fql, ~fetchOnMount=true, ~onSuccess=?, ~onError=?, ()) => {
+let useFQL = (~fql, ~fetchOnMount=false, ~onSuccess=?, ~onError=?, ()) => {
   let appStore = Store.store
   let appState = appStore.useStore()
 
   let (state, setState) = React.useState(() => Idle)
 
-  let query = try {
-    fql->FQL.make
-  } catch {
-  | FQL.SyntaxError(str) =>
-    Js.log(str)
-    switch onError {
-    | Some(onError) => {
-        onError(SyntaxError(str))
-        Null
+  let execQuery = () => {
+    let query = try {
+      fql->FQL.make
+    } catch {
+    | FQL.SyntaxError(str) => {
+        setState(_ => Error(SyntaxError(str)))
+        switch onError {
+        | Some(onError) => {
+            onError(SyntaxError(str))
+            Null
+          }
+        | None => Null
+        }
       }
-    | None => Null
+    }
+    if query !== Null {
+      exec(
+        ~faunaHost={
+          switch appState.host {
+          | FaunaDB => "https://db.fauna.com"
+          | Localhost => `http://localhost:8443`
+          | Other(string) => string
+          }
+        },
+        ~secret=appState.secret,
+        ~query,
+        ~onSuccess=data => {
+          switch onSuccess {
+          | Some(onSuccess) => onSuccess(data)
+          | None => ()
+          }
+          setState(_ => Success(data))
+        },
+        ~onError=err => {
+          switch onError {
+          | Some(onError) => onError(err)
+          | None => ()
+          }
+          setState(_ => Error(err))
+        },
+      )
     }
   }
-
-  let execQuery = () =>
-    exec(
-      ~faunaHost={
-        switch appState.host {
-        | FaunaDB => "https://db.fauna.com"
-        | Localhost => `http://localhost:8443`
-        | Other(string) => string
-        }
-      },
-      ~secret=appState.secret,
-      ~query,
-      ~onSuccess=data => {
-        switch onSuccess {
-        | Some(onSuccess) => onSuccess(data)
-        | None => ()
-        }
-        setState(_ => Success(data))
-      },
-      ~onError=err => {
-        switch onError {
-        | Some(onError) => onError(err)
-        | None => ()
-        }
-        setState(_ => Error(err))
-      },
-    )
 
   React.useEffect0(() => {
     if fetchOnMount {

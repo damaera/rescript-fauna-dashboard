@@ -1,21 +1,17 @@
-type hostT = FaunaDB | Localhost | Other(string)
-
-type screenT = Welcome | Main
-
 type stateT = {
-  screen: screenT,
+  screen: Screen.t,
   secret: string,
-  host: hostT,
+  host: Host.t,
 }
 type actionT =
-  | SetScreen(screenT)
+  | SetScreen(Screen.t)
   | SetSecret(string)
-  | SetHost(hostT)
+  | SetHost(Host.t)
 
 let initialState = {
-  screen: Welcome,
+  screen: Screen.initial,
   secret: "",
-  host: FaunaDB,
+  host: Host.initial,
 }
 
 let store = Restorative.createStore(initialState, (state, action) =>
