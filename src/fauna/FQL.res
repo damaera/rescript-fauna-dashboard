@@ -42,6 +42,7 @@ let matchSplitByComma = str => {
   let result = []
   let item = ref("")
   let depth = ref(0)
+  let stringQuote = ref("")
 
   let push = () => {
     if item.contents !== "" {
@@ -52,7 +53,7 @@ let matchSplitByComma = str => {
 
   for i in 0 to str->Js.String2.length {
     let c = str->Js.String2.charAt(i)
-    if depth.contents === 0 && c === "," {
+    if depth.contents === 0 && c === "," && stringQuote.contents === "" {
       push()
     } else {
       item := item.contents ++ c
@@ -65,19 +66,39 @@ let matchSplitByComma = str => {
       | "]"
       | "}" =>
         depth := depth.contents - 1
-      | _ => ()
+      | str =>
+        if stringQuote.contents === "" {
+          switch c {
+          | `"`
+          | `'`
+          | "`" =>
+            stringQuote := c
+          | _ => ()
+          }
+        } else {
+          let cBefore = {
+            if i !== 0 {
+              str->Js.String2.charAt(i - 1)
+            } else {
+              ""
+            }
+          }
+          if cBefore !== "\"" {
+            switch (stringQuote.contents, c) {
+            | ("\"", "\"")
+            | ("'", "'")
+            | ("`", "`") =>
+              stringQuote := ""
+            | _ => ()
+            }
+          }
+        }
       }
     }
   }
   push()
 
-  Js.log(result)
-
   Some(result)
-
-  // str->Js.String2.match_(
-  //   %re("/\s*(\"[^\"]*\"|\`[^\`]*\`|\'[^\']*\'|\([^)]*\)|\[[^\]]*\]|\{[^\}]*\}|[^,]+)/g"),
-  // )
 }
 
 // FQL make
