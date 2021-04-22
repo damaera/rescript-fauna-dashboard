@@ -13,7 +13,12 @@ body {
 * {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+    box-sizing: border-box;
   font-size: 14px;
+}
+
+h3 {
+  font-size: 21px;
 }
 
 input, textarea, button, select, option {
@@ -25,10 +30,17 @@ input, textarea, button, select, option {
 }
 
 label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
   padding: 10 0px;
 }
 
 button {
   cursor: pointer;
   font-weight: bold;
+  
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
 }
