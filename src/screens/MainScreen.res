@@ -1,3 +1,6 @@
+%%raw(`import styles from "./MainScreen.module.css"`)
+@val external styles: {..} = "styles"
+
 module Queries = {
   open Query
   let allCollections = Select(
@@ -31,27 +34,28 @@ let make = () => {
   let (state, setState) = React.useState(() => "")
   let (queryData, submitQuery) = Client.useFQL(~fql=state, ~fetchOnMount=false, ())
 
-  let responseEl = switch queryData {
-  | Idle => React.null
-  | Loading => "Loading..."->React.string
-  | Success(data) => Js.Json.stringifyWithSpace(data, 2)->React.string
+  let response = switch queryData {
+  | Idle => ""
+  | Loading => "Loading..."
+  | Success(data) => Js.Json.stringifyWithSpace(data, 2)
   | Error(err) =>
     switch err {
-    | FaunaError(err) => Js.Json.stringifyWithSpace(err, 2)->React.string
-    | SyntaxError(str) => str->React.string
-    | _ => "Error happened"->React.string
+    | FaunaError(err) => Js.Json.stringifyWithSpace(err, 2)
+    | SyntaxError(str) => str
+    | _ => "Error happened"
     }
   }
-  <div>
-    <textarea
-      value={state}
-      onChange={e => {
-        let target = e->ReactEvent.Form.target
-        let value = target["value"]
-        setState(_ => value)
-      }}
-    />
-    <button onClick={_ => {submitQuery()}}> {"submit query"->React.string} </button>
-    <div> <pre> <code> {responseEl} </code> </pre> </div>
-  </div>
+  <Page>
+    <div className={styles["container"]}>
+      <div className={styles["input-container"]}>
+        <strong> <label> {"Input"->React.string} </label> </strong>
+        <Editor code={state} setCode={setState} />
+        <button onClick={_ => {submitQuery()}}> {"submit query"->React.string} </button>
+      </div>
+      <div className={styles["result-container"]}>
+        <strong> <label> {"Results"->React.string} </label> </strong>
+        <Editor code={response} setCode={_ => ()} language="json" />
+      </div>
+    </div>
+  </Page>
 }
